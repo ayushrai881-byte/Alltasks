@@ -1,0 +1,759 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>TaskFlow</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode:"class",
+    theme:{extend:{
+      colors:{
+        "on-surface":"#191c1e","on-tertiary-container":"#f5fff6","tertiary":"#006947",
+        "surface-variant":"#e0e3e5","secondary-container":"#d0e1fb","on-tertiary":"#ffffff",
+        "outline-variant":"#c2c6d6","primary-fixed-dim":"#adc6ff","on-primary":"#ffffff",
+        "error-container":"#ffdad6","primary-fixed":"#d8e2ff","inverse-on-surface":"#eff1f3",
+        "primary-container":"#2170e4","tertiary-fixed":"#6ffbbe","surface-container-high":"#e6e8ea",
+        "on-background":"#191c1e","on-primary-fixed":"#001a42","on-error":"#ffffff",
+        "background":"#f7f9fb","on-tertiary-fixed":"#002113","surface-container":"#eceef0",
+        "secondary-fixed":"#d3e4fe","surface-container-lowest":"#ffffff","secondary":"#505f76",
+        "tertiary-fixed-dim":"#4edea3","inverse-primary":"#adc6ff","error":"#ba1a1a",
+        "on-tertiary-fixed-variant":"#005236","surface-tint":"#005ac2","on-surface-variant":"#424754",
+        "surface-container-highest":"#e0e3e5","primary":"#0058be","on-error-container":"#93000a",
+        "surface":"#f7f9fb","outline":"#727785","surface-bright":"#f7f9fb","surface-dim":"#d8dadc",
+        "on-secondary-fixed-variant":"#38485d","surface-container-low":"#f2f4f6",
+        "on-secondary-fixed":"#0b1c30","on-primary-container":"#fefcff","inverse-surface":"#2d3133",
+        "secondary-fixed-dim":"#b7c8e1","tertiary-container":"#00855b","on-primary-fixed-variant":"#004395",
+        "on-secondary":"#ffffff","on-secondary-container":"#54647a"
+      },
+      borderRadius:{"DEFAULT":"0.25rem","lg":"0.5rem","xl":"0.75rem","full":"9999px"},
+      spacing:{"xs":"4px","xl":"32px","max-width":"1280px","md":"16px","margin-mobile":"16px","gutter":"24px","margin-desktop":"40px","unit":"4px","sm":"8px","lg":"24px","2xl":"48px"},
+      fontFamily:{"body-lg":["Inter"],"label-sm":["Inter"],"label-md":["Inter"],"headline-lg":["Inter"],"headline-sm":["Inter"],"headline-lg-mobile":["Inter"],"body-md":["Inter"],"headline-md":["Inter"]},
+      fontSize:{
+        "body-lg":["18px",{"lineHeight":"1.6","letterSpacing":"0","fontWeight":"400"}],
+        "label-sm":["12px",{"lineHeight":"1.2","letterSpacing":"0.05em","fontWeight":"600"}],
+        "label-md":["14px",{"lineHeight":"1.4","letterSpacing":"0.01em","fontWeight":"500"}],
+        "headline-lg":["32px",{"lineHeight":"1.2","letterSpacing":"-0.02em","fontWeight":"600"}],
+        "headline-sm":["20px",{"lineHeight":"1.4","letterSpacing":"-0.01em","fontWeight":"500"}],
+        "headline-lg-mobile":["28px",{"lineHeight":"1.2","fontWeight":"600"}],
+        "body-md":["16px",{"lineHeight":"1.5","letterSpacing":"0","fontWeight":"400"}],
+        "headline-md":["24px",{"lineHeight":"1.3","letterSpacing":"-0.01em","fontWeight":"600"}]
+      }
+    }}
+  }
+</script>
+<style>
+body{font-family:'Inter',sans-serif;-webkit-font-smoothing:antialiased;}
+.material-symbols-outlined{font-variation-settings:'FILL' 0,'wght' 400,'GRAD' 0,'opsz' 24;}
+.screen{display:none;}.screen.active{display:block;}
+input[type="file"]{display:none;}
+.toast{position:fixed;bottom:100px;left:50%;transform:translateX(-50%);background:#191c1e;color:#fff;padding:10px 20px;border-radius:12px;font-size:14px;z-index:9999;opacity:0;transition:opacity 0.3s;pointer-events:none;white-space:nowrap;}
+.toast.show{opacity:1;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.4);z-index:100;display:flex;align-items:flex-end;}
+.modal-sheet{background:#fff;border-radius:20px 20px 0 0;padding:24px 20px 40px;width:100%;max-height:90vh;overflow-y:auto;}
+select,input[type="text"],input[type="password"],input[type="email"],textarea{font-family:'Inter',sans-serif;border:1px solid #c2c6d6;border-radius:12px;padding:10px 14px;font-size:14px;width:100%;background:#fff;color:#191c1e;outline:none;box-sizing:border-box;}
+select:focus,input:focus,textarea:focus{border-color:#0058be;box-shadow:0 0 0 3px rgba(0,88,190,0.1);}
+.priority-high{color:#ba1a1a;}.priority-medium{color:#0058be;}.priority-low{color:#006947;}
+.sync-dot{width:8px;height:8px;border-radius:50%;background:#4edea3;display:inline-block;margin-right:4px;}
+.sync-dot.syncing{background:#ef9f27;animation:pulse 1s infinite;}.sync-dot.error{background:#ba1a1a;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.3}}
+.schedule-slot{border-left:3px solid #0058be;padding-left:12px;margin-bottom:16px;}
+.schedule-slot.empty{border-left-color:#c2c6d6;opacity:0.5;}
+.nav-active{background:#d0e1fb;color:#0b1c30 !important;border-radius:12px;}
+</style>
+</head>
+<body class="bg-background text-on-background min-h-screen">
+
+<!-- ===== LOGIN ===== -->
+<div id="login-screen" class="min-h-screen flex items-center justify-center px-6">
+  <div class="w-full max-w-sm">
+    <div class="text-center mb-8">
+      <div class="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <span class="material-symbols-outlined text-white" style="font-size:32px;">task_alt</span>
+      </div>
+      <h1 class="font-headline-md text-headline-md text-on-surface">TaskFlow</h1>
+      <p class="font-label-md text-label-md text-secondary mt-1">Your productivity command center</p>
+    </div>
+    <div class="bg-surface-container-lowest rounded-2xl p-6 shadow-[0px_4px_20px_rgba(15,23,42,0.08)]">
+      <div class="flex flex-col gap-md">
+        <div>
+          <label class="font-label-sm text-label-sm text-secondary block mb-2">USERNAME</label>
+          <input type="text" id="login-user" placeholder="Enter username"/>
+        </div>
+        <div>
+          <label class="font-label-sm text-label-sm text-secondary block mb-2">PASSWORD</label>
+          <input type="password" id="login-pass" placeholder="Enter password" onkeydown="if(event.key==='Enter')doLogin()"/>
+        </div>
+        <div id="login-error" class="hidden text-error font-label-md text-label-md text-center py-2 bg-error-container rounded-lg px-3"></div>
+        <button onclick="doLogin()" class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all">Sign In</button>
+      </div>
+      <p class="text-center font-label-sm text-label-sm text-secondary mt-4">
+        <button onclick="showConfigModal()" class="text-primary underline">⚙ Configure Google Sheets</button>
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MAIN APP ===== -->
+<div id="main-app" class="hidden">
+  <!-- HEADER -->
+  <header class="w-full top-0 sticky z-40 bg-surface shadow-[0px_4px_20px_rgba(15,23,42,0.05)]">
+    <div class="flex justify-between items-center px-margin-mobile md:px-margin-desktop py-md w-full max-w-max-width mx-auto">
+      <span class="font-headline-sm text-headline-sm text-primary font-bold" id="header-title">All Tasks</span>
+      <div class="flex items-center gap-sm">
+        <span class="flex items-center"><span class="sync-dot" id="sync-dot"></span><span class="font-label-sm text-label-sm text-secondary" id="sync-text">Synced</span></span>
+        <button onclick="loadData()" class="text-secondary hover:bg-surface-container-low p-2 rounded-full active:scale-95 transition-all"><span class="material-symbols-outlined">sync</span></button>
+        <button onclick="doLogout()" class="text-secondary hover:bg-surface-container-low p-2 rounded-full active:scale-95 transition-all"><span class="material-symbols-outlined">logout</span></button>
+      </div>
+    </div>
+  </header>
+
+  <!-- SCREEN: ALL TASKS -->
+  <div id="screen-tasks" class="screen active max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg pb-36">
+    <div class="grid grid-cols-2 gap-md mb-xl">
+      <div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(15,23,42,0.05)]">
+        <span class="font-label-sm text-label-sm text-secondary block">Total Tasks</span>
+        <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-total">0</span>
+      </div>
+      <div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(15,23,42,0.05)]">
+        <span class="font-label-sm text-label-sm text-secondary block">Time Required</span>
+        <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-time">0h</span>
+      </div>
+    </div>
+    <!-- Filters -->
+    <div class="bg-surface-container-lowest rounded-xl p-md mb-lg shadow-[0px_2px_8px_rgba(15,23,42,0.05)]">
+      <div class="flex items-center gap-xs mb-sm">
+        <span class="material-symbols-outlined text-secondary" style="font-size:18px;">filter_list</span>
+        <span class="font-label-sm text-label-sm text-secondary">FILTER BY</span>
+      </div>
+      <div class="grid grid-cols-3 gap-sm">
+        <select id="filter-priority" onchange="renderTasks()">
+          <option value="">All Priority</option>
+          <option value="High">High</option>
+          <option value="Medium">Medium</option>
+          <option value="Low">Low</option>
+        </select>
+        <select id="filter-time" onchange="renderTasks()">
+          <option value="">All Time</option>
+          <option value="30 min">30 min</option>
+          <option value="1 hour">1 hour</option>
+          <option value="2 hours">2 hours</option>
+          <option value="4 hours">4 hours</option>
+          <option value="1+ day">1+ day</option>
+        </select>
+        <select id="filter-category" onchange="renderTasks()">
+          <option value="">All Category</option>
+        </select>
+      </div>
+    </div>
+    <div class="flex justify-between items-center mb-md">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Active Tasks</h2>
+      <button onclick="showBulkModal()" class="text-primary font-label-md text-label-md flex items-center gap-xs active:scale-95">
+        <span class="material-symbols-outlined" style="font-size:18px;">upload_file</span> Bulk Upload
+      </button>
+    </div>
+    <div id="task-list" class="flex flex-col gap-md"></div>
+    <div id="task-empty" class="hidden text-center py-16">
+      <span class="material-symbols-outlined text-outline" style="font-size:48px;">inbox</span>
+      <p class="font-body-md text-body-md text-secondary mt-3">No active tasks. Tap + to add one!</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: TODAY'S FOCUS -->
+  <div id="screen-focus" class="screen max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg pb-36">
+    <div class="grid grid-cols-2 gap-md mb-xl">
+      <div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(15,23,42,0.05)]">
+        <span class="font-label-sm text-label-sm text-secondary block">Focus Tasks</span>
+        <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-focus">0</span>
+      </div>
+      <div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(15,23,42,0.05)]">
+        <span class="font-label-sm text-label-sm text-secondary block">Focus Hours</span>
+        <span class="font-headline-lg text-headline-lg text-on-surface" id="stat-focus-time">0h</span>
+      </div>
+    </div>
+    <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md">Today's Focus</h2>
+    <div id="focus-list" class="flex flex-col gap-md"></div>
+    <div id="focus-empty" class="hidden text-center py-16">
+      <span class="material-symbols-outlined text-outline" style="font-size:48px;">today</span>
+      <p class="font-body-md text-body-md text-secondary mt-3">Move tasks here from All Tasks → Focus</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: SCHEDULE -->
+  <div id="screen-schedule" class="screen max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg pb-36">
+    <p class="font-label-sm text-label-sm text-secondary mb-lg">Your Today's Focus tasks mapped to time slots</p>
+    <div id="schedule-list"></div>
+  </div>
+
+  <!-- SCREEN: BACKLOG -->
+  <div id="screen-backlog" class="screen max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg pb-36">
+    <h2 class="font-headline-sm text-headline-sm text-on-surface mb-md">Backlog</h2>
+    <div id="backlog-list" class="flex flex-col gap-md"></div>
+    <div id="backlog-empty" class="hidden text-center py-16">
+      <span class="material-symbols-outlined text-outline" style="font-size:48px;">inventory_2</span>
+      <p class="font-body-md text-body-md text-secondary mt-3">Backlog is empty</p>
+    </div>
+  </div>
+
+  <!-- SCREEN: COMPLETED -->
+  <div id="screen-done" class="screen max-w-max-width mx-auto px-margin-mobile md:px-margin-desktop py-lg pb-36">
+    <div class="flex justify-between items-center mb-md">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Completed</h2>
+      <span class="font-label-sm text-label-sm text-secondary" id="done-count">0 tasks</span>
+    </div>
+    <div id="done-list" class="flex flex-col gap-md"></div>
+    <div id="done-empty" class="hidden text-center py-16">
+      <span class="material-symbols-outlined text-outline" style="font-size:48px;">check_circle</span>
+      <p class="font-body-md text-body-md text-secondary mt-3">No completed tasks yet</p>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <nav class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center px-2 pb-4 pt-2 bg-surface-container-lowest shadow-[0px_-4px_20px_rgba(15,23,42,0.05)] rounded-t-xl">
+    <button onclick="switchScreen('tasks')" id="nav-tasks" class="flex flex-col items-center px-3 py-2 rounded-xl transition-all text-secondary nav-active">
+      <span class="material-symbols-outlined">assignment</span>
+      <span class="font-label-sm text-label-sm mt-1">Tasks</span>
+    </button>
+    <button onclick="switchScreen('focus')" id="nav-focus" class="flex flex-col items-center px-3 py-2 rounded-xl transition-all text-secondary">
+      <span class="material-symbols-outlined">today</span>
+      <span class="font-label-sm text-label-sm mt-1">Focus</span>
+    </button>
+    <button onclick="showAddModal()" class="flex flex-col items-center justify-center w-14 h-14 bg-primary text-on-primary rounded-full shadow-lg active:scale-95 transition-transform -mt-4">
+      <span class="material-symbols-outlined" style="font-size:28px;">add</span>
+    </button>
+    <button onclick="switchScreen('backlog')" id="nav-backlog" class="flex flex-col items-center px-3 py-2 rounded-xl transition-all text-secondary">
+      <span class="material-symbols-outlined">inbox</span>
+      <span class="font-label-sm text-label-sm mt-1">Backlog</span>
+    </button>
+    <button onclick="switchScreen('done')" id="nav-done" class="flex flex-col items-center px-3 py-2 rounded-xl transition-all text-secondary">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span class="font-label-sm text-label-sm mt-1">Done</span>
+    </button>
+  </nav>
+</div>
+
+<!-- ===== MODAL: ADD TASK ===== -->
+<div id="modal-add" class="modal-overlay hidden" onclick="if(event.target===this)closeAddModal()">
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-lg">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">New Task</h2>
+      <button onclick="closeAddModal()" class="p-1 text-secondary"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="flex flex-col gap-md">
+      <div>
+        <label class="font-label-sm text-label-sm text-secondary block mb-2">TASK NAME *</label>
+        <input type="text" id="t-name" placeholder="What needs to be done?"/>
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-secondary block mb-2">CATEGORY</label>
+        <select id="t-category"><option value="">Select category</option></select>
+      </div>
+      <div class="grid grid-cols-2 gap-md">
+        <div>
+          <label class="font-label-sm text-label-sm text-secondary block mb-2">PRIORITY</label>
+          <select id="t-priority">
+            <option value="High">High</option>
+            <option value="Medium" selected>Medium</option>
+            <option value="Low">Low</option>
+          </select>
+        </div>
+        <div>
+          <label class="font-label-sm text-label-sm text-secondary block mb-2">TIME REQUIRED</label>
+          <select id="t-time">
+            <option value="30 min">30 min</option>
+            <option value="1 hour" selected>1 hour</option>
+            <option value="2 hours">2 hours</option>
+            <option value="4 hours">4 hours</option>
+            <option value="1+ day">1+ day</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="font-label-sm text-label-sm text-secondary block mb-2">NOTES (optional)</label>
+        <textarea id="t-notes" rows="2" placeholder="Additional notes..."></textarea>
+      </div>
+      <button onclick="saveTask()" class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all">Add Task</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: TIME SLOT ===== -->
+<div id="modal-slot" class="modal-overlay hidden" onclick="if(event.target===this)closeSlotModal()">
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-sm">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Choose Time Slot</h2>
+      <button onclick="closeSlotModal()" class="p-1 text-secondary"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <p id="slot-task-name" class="font-label-md text-label-md text-secondary mb-lg"></p>
+    <div class="flex flex-col gap-sm" id="slot-options"></div>
+  </div>
+</div>
+
+<!-- ===== MODAL: BULK UPLOAD ===== -->
+<div id="modal-bulk" class="modal-overlay hidden" onclick="if(event.target===this)closeBulkModal()">
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-lg">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Bulk Upload Tasks</h2>
+      <button onclick="closeBulkModal()" class="p-1 text-secondary"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="bg-surface-container p-md rounded-xl mb-md">
+      <p class="font-label-sm text-label-sm text-secondary mb-sm">FORMAT (one task per line):</p>
+      <code class="text-xs text-on-surface-variant block leading-relaxed">Task Name | Category | Priority | Time<br>Fix login bug | Dev | High | 1 hour<br>Write docs | Marketing | Low | 2 hours</code>
+    </div>
+    <div class="w-full border-2 border-dashed border-outline-variant rounded-xl p-8 text-center cursor-pointer hover:border-primary transition-colors mb-md" onclick="document.getElementById('bulk-file').click()">
+      <input type="file" id="bulk-file" accept=".txt" onchange="parseBulkFile(event)"/>
+      <span class="material-symbols-outlined text-outline" style="font-size:40px;">upload_file</span>
+      <p class="font-label-md text-label-md text-secondary mt-2">Tap to select .txt file</p>
+    </div>
+    <p class="font-label-sm text-label-sm text-secondary mb-sm">OR PASTE TEXT:</p>
+    <textarea id="bulk-text" rows="4" placeholder="Task Name | Category | Priority | Time&#10;Fix login bug | Dev | High | 1 hour" class="mb-sm"></textarea>
+    <button onclick="parseBulkText()" class="w-full bg-surface-container text-on-surface font-label-md text-label-md py-3 rounded-xl hover:bg-surface-container-high active:scale-95 transition-all mb-md">Parse & Preview</button>
+    <div id="bulk-preview" class="hidden">
+      <p class="font-label-sm text-label-sm text-secondary mb-sm">PREVIEW — <span id="bulk-count">0</span> tasks:</p>
+      <div id="bulk-list" class="max-h-40 overflow-y-auto flex flex-col gap-sm mb-md"></div>
+      <button onclick="confirmBulk()" class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all">Upload All</button>
+    </div>
+  </div>
+</div>
+
+<!-- ===== MODAL: CONFIG ===== -->
+<div id="modal-config" class="modal-overlay hidden" onclick="if(event.target===this)closeConfigModal()">
+  <div class="modal-sheet">
+    <div class="flex justify-between items-center mb-lg">
+      <h2 class="font-headline-sm text-headline-sm text-on-surface">Configure Google Sheets</h2>
+      <button onclick="closeConfigModal()" class="p-1 text-secondary"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="bg-primary-fixed p-md rounded-xl mb-md">
+      <p class="font-label-sm text-label-sm text-on-primary-fixed font-semibold mb-xs">APPS SCRIPT WEB APP URL</p>
+      <p class="font-label-sm text-label-sm text-on-primary-fixed opacity-70 mb-md">Deploy your Google Apps Script as a web app and paste the URL here. See setup-guide.html for full instructions.</p>
+      <input type="text" id="cfg-url" placeholder="https://script.google.com/macros/s/.../exec" style="border-color:#adc6ff;"/>
+    </div>
+    <button onclick="saveConfig()" class="w-full bg-primary text-on-primary font-label-md text-label-md py-3 rounded-xl hover:bg-blue-700 active:scale-95 transition-all mb-md">Save & Connect</button>
+    <p class="text-center font-label-sm text-label-sm text-secondary">Without configuring, the app works in demo mode (data saved in browser only).</p>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="toast"></div>
+
+<script>
+// ================================================================
+// STATE & CONFIG
+// ================================================================
+let API_URL = localStorage.getItem('tf_api') || '';
+const PRIORITY_ORDER = {High:0, Medium:1, Low:2};
+const TIME_SLOTS = [
+  '8:00–9:00 AM','9:00–10:00 AM','10:00–11:00 AM','11:00 AM–12:00 PM',
+  '12:00–1:00 PM','1:00–2:00 PM','2:00–3:00 PM','3:00–4:00 PM',
+  '4:00–5:00 PM','5:00–6:00 PM','6:00–7:00 PM','7:00–8:00 PM',
+  '8:00–9:00 PM','9:00–10:00 PM','10:00–11:00 PM','11:00 PM–12:00 AM'
+];
+let S = { tasks:[], categories:[], user:null, slotTaskId:null, bulkParsed:[] };
+
+// ================================================================
+// AUTH
+// ================================================================
+async function doLogin() {
+  const u = document.getElementById('login-user').value.trim();
+  const p = document.getElementById('login-pass').value.trim();
+  if (!u || !p) { setLoginErr('Please enter username and password'); return; }
+  if (API_URL) {
+    try {
+      const r = await api({action:'login', username:u, password:p});
+      if (r.success) { S.user = {username:u, name:r.displayName||u}; enterApp(); }
+      else setLoginErr('Invalid username or password');
+    } catch(e) { setLoginErr('Cannot connect. Check your API URL configuration.'); }
+  } else {
+    S.user = {username:u, name:u};
+    enterApp();
+    toast('Demo mode — data saved in browser. Configure API for Sheets sync.');
+  }
+}
+
+function doLogout() {
+  S.user = null;
+  document.getElementById('main-app').classList.add('hidden');
+  document.getElementById('login-screen').classList.remove('hidden');
+}
+
+function setLoginErr(msg) {
+  const e = document.getElementById('login-error');
+  e.textContent = msg;
+  e.classList.remove('hidden');
+}
+
+function enterApp() {
+  document.getElementById('login-screen').classList.add('hidden');
+  document.getElementById('main-app').classList.remove('hidden');
+  document.getElementById('login-error').classList.add('hidden');
+  loadData();
+}
+
+// ================================================================
+// API & SYNC
+// ================================================================
+async function api(body) {
+  const r = await fetch(API_URL, {method:'POST', headers:{'Content-Type':'text/plain'}, body:JSON.stringify(body)});
+  return r.json();
+}
+
+async function loadData() {
+  syncStatus('syncing','Loading...');
+  try {
+    if (API_URL) {
+      const r = await api({action:'getData', username:S.user.username});
+      if (r.success) { S.tasks = r.tasks||[]; S.categories = r.categories||[]; }
+    } else {
+      S.tasks = JSON.parse(localStorage.getItem('tf_tasks')||'[]');
+      S.categories = JSON.parse(localStorage.getItem('tf_cats')||'["Work","Personal","Dev","Marketing","Design","Operations","Admin"]');
+    }
+    refreshCategoryDropdowns();
+    renderAll();
+    syncStatus('ok','Synced');
+  } catch(e) {
+    syncStatus('err','Error');
+    toast('Could not load data');
+  }
+}
+
+async function push(action, data) {
+  if (!API_URL) { localStorage.setItem('tf_tasks', JSON.stringify(S.tasks)); return; }
+  syncStatus('syncing','Saving...');
+  try {
+    const r = await api({action, username:S.user.username, ...data});
+    if (r.success) syncStatus('ok','Synced');
+    else { syncStatus('err','Failed'); toast('Save failed'); }
+  } catch(e) {
+    syncStatus('err','Offline');
+    localStorage.setItem('tf_tasks', JSON.stringify(S.tasks));
+    toast('Saved locally — will sync when online');
+  }
+}
+
+function syncStatus(st, txt) {
+  const d = document.getElementById('sync-dot');
+  d.className = 'sync-dot' + (st==='syncing'?' syncing':st==='err'?' error':'');
+  document.getElementById('sync-text').textContent = txt;
+}
+
+// ================================================================
+// TASK OPERATIONS
+// ================================================================
+function uid() { return 'T' + Date.now() + Math.random().toString(36).substr(2,4); }
+
+async function saveTask() {
+  const name = document.getElementById('t-name').value.trim();
+  if (!name) { toast('Please enter a task name'); return; }
+  const task = {
+    id: uid(),
+    name,
+    category: document.getElementById('t-category').value || 'General',
+    priority: document.getElementById('t-priority').value,
+    time: document.getElementById('t-time').value,
+    notes: document.getElementById('t-notes').value.trim(),
+    status: 'active',
+    timeSlot: '',
+    createdAt: new Date().toISOString(),
+    user: S.user.username
+  };
+  S.tasks.push(task);
+  renderAll();
+  closeAddModal();
+  toast('Task added!');
+  await push('addTask', {task});
+}
+
+async function moveTask(id, newStatus) {
+  const t = S.tasks.find(x => x.id===id);
+  if (!t) return;
+  if (newStatus==='focus' && !t.timeSlot) { showSlotModal(id); return; }
+  t.status = newStatus;
+  renderAll();
+  const msgs = {done:'Marked complete ✓', focus:"Added to Today's Focus", backlog:'Moved to Backlog', active:'Moved to Active'};
+  toast(msgs[newStatus]||'Updated');
+  await push('updateTask', {task:t});
+}
+
+async function assignSlot(id, slot) {
+  const t = S.tasks.find(x => x.id===id);
+  if (!t) return;
+  t.timeSlot = slot;
+  t.status = 'focus';
+  renderAll();
+  closeSlotModal();
+  toast('Added to Today\'s Focus — ' + slot);
+  await push('updateTask', {task:t});
+}
+
+async function deleteTask(id) {
+  if (!confirm('Delete this task?')) return;
+  S.tasks = S.tasks.filter(x => x.id!==id);
+  renderAll();
+  toast('Task deleted');
+  await push('deleteTask', {id});
+}
+
+// ================================================================
+// RENDER
+// ================================================================
+const PCLASS = {High:'priority-high', Medium:'priority-medium', Low:'priority-low'};
+
+function sorted(arr) {
+  return [...arr].sort((a,b) => (PRIORITY_ORDER[a.priority]??1)-(PRIORITY_ORDER[b.priority]??1));
+}
+
+function renderAll() {
+  renderTasks(); renderFocus(); renderBacklog(); renderDone(); renderSchedule(); updateStats();
+}
+
+function calcTime(tasks) {
+  const map = {'30 min':30,'1 hour':60,'2 hours':120,'4 hours':240,'1+ day':480};
+  let m = tasks.reduce((s,t) => s+(map[t.time]||60), 0);
+  return m<60 ? m+'m' : (m/60%1===0 ? m/60+'h' : (m/60).toFixed(1)+'h');
+}
+
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+function btn(icon, label, cls, fn) {
+  return `<button onclick="${fn}" class="flex items-center gap-xs px-sm py-1 rounded-full ${cls} transition-colors duration-150 font-label-sm text-label-sm">
+    <span class="material-symbols-outlined" style="font-size:16px;">${icon}</span>${label}</button>`;
+}
+
+function card(t, btns) {
+  return `<div class="bg-surface-container-lowest p-lg rounded-xl shadow-[0px_4px_20px_rgba(15,23,42,0.05)] flex justify-between items-start hover:bg-surface-container-low transition-colors">
+    <div class="flex flex-col gap-xs flex-1 min-w-0 mr-md">
+      <span class="font-label-sm text-label-sm ${PCLASS[t.priority]||'priority-medium'} uppercase">${esc(t.priority)} Priority</span>
+      <h3 class="font-headline-sm text-headline-sm text-on-surface">${esc(t.name)}</h3>
+      ${t.notes?`<p class="font-label-md text-label-md text-secondary">${esc(t.notes)}</p>`:''}
+      <div class="flex items-center gap-sm flex-wrap mt-xs">
+        <span class="font-label-md text-label-md text-primary">${esc(t.category)}</span>
+        ${t.timeSlot?`<span class="font-label-sm text-label-sm text-tertiary bg-tertiary-fixed/20 px-2 py-0.5 rounded-full">${esc(t.timeSlot)}</span>`:''}
+      </div>
+      <div class="flex items-center gap-sm flex-wrap mt-xs">${btns}</div>
+    </div>
+    <div class="flex flex-col items-end gap-sm shrink-0">
+      <span class="font-body-md text-body-md text-secondary">${esc(t.time)}</span>
+      <button onclick="deleteTask('${t.id}')" class="text-outline hover:text-error transition-colors mt-1">
+        <span class="material-symbols-outlined" style="font-size:18px;">delete</span></button>
+    </div>
+  </div>`;
+}
+
+function renderTasks() {
+  const fp = document.getElementById('filter-priority')?.value||'';
+  const ft = document.getElementById('filter-time')?.value||'';
+  const fc = document.getElementById('filter-category')?.value||'';
+  const tasks = sorted(S.tasks.filter(t => {
+    if (t.status!=='active') return false;
+    if (fp && t.priority!==fp) return false;
+    if (ft && t.time!==ft) return false;
+    if (fc && t.category!==fc) return false;
+    return true;
+  }));
+  const el = document.getElementById('task-list');
+  const empty = document.getElementById('task-empty');
+  if (!tasks.length) { el.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  el.innerHTML = tasks.map(t => card(t,
+    btn('check_circle','Done','bg-tertiary/10 text-tertiary hover:bg-tertiary hover:text-on-tertiary',`moveTask('${t.id}','done')`) +
+    btn('today','Focus','bg-primary/10 text-primary hover:bg-primary hover:text-on-primary',`moveTask('${t.id}','focus')`) +
+    btn('move_to_inbox','Backlog','bg-secondary/10 text-secondary hover:bg-secondary hover:text-on-secondary',`moveTask('${t.id}','backlog')`)
+  )).join('');
+}
+
+function renderFocus() {
+  const tasks = sorted(S.tasks.filter(t=>t.status==='focus'));
+  const el = document.getElementById('focus-list');
+  const empty = document.getElementById('focus-empty');
+  document.getElementById('stat-focus').textContent = tasks.length;
+  document.getElementById('stat-focus-time').textContent = calcTime(tasks);
+  if (!tasks.length) { el.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  el.innerHTML = tasks.map(t => card(t,
+    btn('check_circle','Done','bg-tertiary/10 text-tertiary hover:bg-tertiary hover:text-on-tertiary',`moveTask('${t.id}','done')`) +
+    btn('schedule','Change Slot','bg-primary/10 text-primary hover:bg-primary hover:text-on-primary',`showSlotModal('${t.id}')`) +
+    btn('undo','Remove','bg-secondary/10 text-secondary hover:bg-secondary hover:text-on-secondary',`moveTask('${t.id}','active')`)
+  )).join('');
+}
+
+function renderBacklog() {
+  const tasks = sorted(S.tasks.filter(t=>t.status==='backlog'));
+  const el = document.getElementById('backlog-list');
+  const empty = document.getElementById('backlog-empty');
+  if (!tasks.length) { el.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  el.innerHTML = tasks.map(t => card(t,
+    btn('check_circle','Done','bg-tertiary/10 text-tertiary hover:bg-tertiary hover:text-on-tertiary',`moveTask('${t.id}','done')`) +
+    btn('today','Focus','bg-primary/10 text-primary hover:bg-primary hover:text-on-primary',`moveTask('${t.id}','focus')`) +
+    btn('undo','Active','bg-secondary/10 text-secondary hover:bg-secondary hover:text-on-secondary',`moveTask('${t.id}','active')`)
+  )).join('');
+}
+
+function renderDone() {
+  const tasks = S.tasks.filter(t=>t.status==='done');
+  const el = document.getElementById('done-list');
+  const empty = document.getElementById('done-empty');
+  document.getElementById('done-count').textContent = tasks.length+' tasks';
+  if (!tasks.length) { el.innerHTML=''; empty.classList.remove('hidden'); return; }
+  empty.classList.add('hidden');
+  el.innerHTML = tasks.map(t => `
+    <div class="bg-surface-container-lowest p-lg rounded-xl opacity-70 flex justify-between items-center">
+      <div>
+        <span class="font-label-sm text-label-sm text-tertiary block">✓ Done</span>
+        <h3 class="font-headline-sm text-headline-sm text-on-surface line-through">${esc(t.name)}</h3>
+        <span class="font-label-md text-label-md text-secondary">${esc(t.category)} · ${esc(t.time)}</span>
+      </div>
+      <button onclick="moveTask('${t.id}','active')" class="font-label-sm text-label-sm text-primary ml-md whitespace-nowrap">Restore</button>
+    </div>`).join('');
+}
+
+function renderSchedule() {
+  const slotMap = {};
+  S.tasks.filter(t=>t.status==='focus').forEach(t=>{ if(t.timeSlot) slotMap[t.timeSlot]=t; });
+  document.getElementById('schedule-list').innerHTML = TIME_SLOTS.map(slot => {
+    const t = slotMap[slot];
+    return t
+      ? `<div class="schedule-slot mb-4">
+          <span class="font-label-sm text-label-sm text-secondary">${slot}</span>
+          <div class="flex justify-between items-center mt-xs">
+            <div><h4 class="font-headline-sm text-headline-sm text-on-surface">${esc(t.name)}</h4>
+            <span class="font-label-md text-label-md text-primary">${esc(t.category)} · <span class="${PCLASS[t.priority]||''}">${esc(t.priority)}</span></span></div>
+            <span class="font-label-md text-label-md text-secondary">${esc(t.time)}</span>
+          </div></div>`
+      : `<div class="schedule-slot empty mb-4">
+          <span class="font-label-sm text-label-sm text-secondary">${slot}</span>
+          <p class="font-label-md text-label-md text-outline mt-xs">Free slot</p></div>`;
+  }).join('');
+}
+
+function updateStats() {
+  const active = S.tasks.filter(t=>t.status==='active');
+  document.getElementById('stat-total').textContent = active.length;
+  document.getElementById('stat-time').textContent = calcTime(active);
+}
+
+function refreshCategoryDropdowns() {
+  ['t-category','filter-category'].forEach(id => {
+    const el = document.getElementById(id); if (!el) return;
+    const ph = id==='filter-category' ? '<option value="">All Category</option>' : '<option value="">Select category</option>';
+    el.innerHTML = ph + S.categories.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join('');
+  });
+}
+
+// ================================================================
+// NAVIGATION
+// ================================================================
+const titles = {tasks:'All Tasks', focus:"Today's Focus", schedule:'Schedule', backlog:'Backlog', done:'Completed'};
+function switchScreen(name) {
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  const scr = document.getElementById('screen-'+name);
+  if (scr) scr.classList.add('active');
+  document.getElementById('header-title').textContent = titles[name]||name;
+  document.querySelectorAll('nav button[id^="nav-"]').forEach(b=>{ b.classList.remove('nav-active'); b.classList.add('text-secondary'); });
+  const nb = document.getElementById('nav-'+name);
+  if (nb) { nb.classList.add('nav-active'); nb.classList.remove('text-secondary'); }
+  if (name==='schedule') renderSchedule();
+}
+
+// ================================================================
+// MODALS
+// ================================================================
+function showAddModal() {
+  document.getElementById('t-name').value='';
+  document.getElementById('t-notes').value='';
+  document.getElementById('modal-add').classList.remove('hidden');
+  setTimeout(()=>document.getElementById('t-name').focus(),100);
+}
+function closeAddModal() { document.getElementById('modal-add').classList.add('hidden'); }
+
+function showSlotModal(id) {
+  S.slotTaskId = id;
+  const t = S.tasks.find(x=>x.id===id);
+  document.getElementById('slot-task-name').textContent = t ? t.name : '';
+  document.getElementById('slot-options').innerHTML = TIME_SLOTS.map(slot =>
+    `<button onclick="assignSlot('${id}','${slot.replace(/'/g,"\\'")}')" class="w-full text-left py-3 px-md rounded-xl bg-surface-container hover:bg-primary hover:text-on-primary transition-colors font-label-md text-label-md text-on-surface">${slot}</button>`
+  ).join('');
+  document.getElementById('modal-slot').classList.remove('hidden');
+}
+function closeSlotModal() { document.getElementById('modal-slot').classList.add('hidden'); }
+
+function showBulkModal() { document.getElementById('modal-bulk').classList.remove('hidden'); }
+function closeBulkModal() { document.getElementById('modal-bulk').classList.add('hidden'); }
+
+function showConfigModal() {
+  document.getElementById('cfg-url').value = API_URL;
+  document.getElementById('modal-config').classList.remove('hidden');
+}
+function closeConfigModal() { document.getElementById('modal-config').classList.add('hidden'); }
+
+function saveConfig() {
+  API_URL = document.getElementById('cfg-url').value.trim();
+  localStorage.setItem('tf_api', API_URL);
+  closeConfigModal();
+  toast('API URL saved!');
+  if (S.user) loadData();
+}
+
+// ================================================================
+// BULK UPLOAD
+// ================================================================
+function parseBulkFile(e) {
+  const f = e.target.files[0]; if (!f) return;
+  const r = new FileReader();
+  r.onload = ev => parseBulkContent(ev.target.result);
+  r.readAsText(f);
+}
+function parseBulkText() { parseBulkContent(document.getElementById('bulk-text').value); }
+
+function parseBulkContent(text) {
+  const validTimes = ['30 min','1 hour','2 hours','4 hours','1+ day'];
+  const validPri = ['High','Medium','Low'];
+  const parsed = text.split('\n')
+    .map(l=>l.trim()).filter(l=>l && !l.startsWith('#') && !l.toLowerCase().startsWith('task name'))
+    .map(line => {
+      const p = line.split('|').map(x=>x.trim());
+      if (!p[0]) return null;
+      return {
+        id: uid(), name: p[0],
+        category: p[1]||'General',
+        priority: validPri.includes(p[2]) ? p[2] : 'Medium',
+        time: validTimes.includes(p[3]) ? p[3] : '1 hour',
+        notes: p[4]||'', status:'active', timeSlot:'',
+        createdAt: new Date().toISOString(), user: S.user?.username||''
+      };
+    }).filter(Boolean);
+  S.bulkParsed = parsed;
+  document.getElementById('bulk-count').textContent = parsed.length;
+  document.getElementById('bulk-list').innerHTML = parsed.map(t =>
+    `<div class="bg-surface-container p-sm rounded-lg flex justify-between items-center">
+      <span class="font-label-md text-label-md text-on-surface">${esc(t.name)}</span>
+      <span class="font-label-sm text-label-sm text-secondary ml-2 shrink-0">${t.priority} · ${t.time}</span>
+    </div>`).join('');
+  document.getElementById('bulk-preview').classList.remove('hidden');
+}
+
+async function confirmBulk() {
+  if (!S.bulkParsed.length) return;
+  S.tasks.push(...S.bulkParsed);
+  renderAll();
+  const n = S.bulkParsed.length;
+  closeBulkModal();
+  toast(n+' tasks uploaded!');
+  await push('bulkAdd', {tasks: S.bulkParsed});
+  S.bulkParsed = [];
+}
+
+// ================================================================
+// TOAST
+// ================================================================
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 2800);
+}
+</script>
+</body>
+</html>

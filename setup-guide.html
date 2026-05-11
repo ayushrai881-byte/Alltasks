@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>TaskFlow Setup Guide</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<style>body{font-family:'Inter',sans-serif;} code{background:#f1f5f9;padding:2px 6px;border-radius:6px;font-size:13px;font-family:monospace;}</style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen">
+<div class="max-w-2xl mx-auto px-6 py-12">
+
+  <div class="flex items-center gap-3 mb-10">
+    <div class="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center">
+      <span class="text-white font-bold text-lg">T</span>
+    </div>
+    <h1 class="text-2xl font-bold text-slate-900">TaskFlow Setup Guide</h1>
+  </div>
+
+  <div class="bg-blue-50 border border-blue-200 rounded-xl p-4 mb-8">
+    <p class="text-blue-800 font-medium">Follow these 5 steps once to connect your dashboard to Google Sheets. Takes about 10 minutes.</p>
+  </div>
+
+  <!-- STEP 1 -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0">1</span>
+      <h2 class="text-lg font-semibold">Create a Google Sheet</h2>
+    </div>
+    <div class="ml-11">
+      <ol class="list-decimal list-inside space-y-2 text-slate-600">
+        <li>Go to <a href="https://sheets.google.com" target="_blank" class="text-blue-600 underline">sheets.google.com</a> and create a new spreadsheet</li>
+        <li>Name it <strong>TaskFlow Data</strong> (or anything you like)</li>
+        <li>Create these 3 sheets (tabs at the bottom):
+          <ul class="list-none mt-2 space-y-1 ml-4">
+            <li>📋 <code>Tasks</code></li>
+            <li>👥 <code>Users</code></li>
+            <li>🏷️ <code>Categories</code></li>
+          </ul>
+        </li>
+        <li>In the <strong>Users</strong> sheet, add headers in row 1: <code>Username</code> | <code>Password</code> | <code>DisplayName</code> | <code>Active</code></li>
+        <li>Add your first user in row 2, e.g: <code>admin</code> | <code>yourpassword</code> | <code>Admin</code> | <code>true</code></li>
+        <li>In the <strong>Categories</strong> sheet, add header <code>Category</code> in row 1, then list your categories below (one per row)</li>
+      </ol>
+      <div class="bg-slate-100 rounded-lg p-3 mt-3">
+        <p class="text-xs text-slate-500 font-medium mb-1">EXAMPLE CATEGORIES:</p>
+        <p class="text-sm text-slate-700">Work, Personal, Dev, Marketing, Design, Operations, Admin</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- STEP 2 -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0">2</span>
+      <h2 class="text-lg font-semibold">Copy the Sheet ID</h2>
+    </div>
+    <div class="ml-11">
+      <p class="text-slate-600 mb-2">Your Sheet URL looks like this:</p>
+      <code class="block text-xs bg-slate-100 p-3 rounded-lg break-all">https://docs.google.com/spreadsheets/d/<strong class="text-blue-700">1BxiMVs0XRA5nFMdKvBdBZjgmUUqptlbs74OgVE2upms</strong>/edit</code>
+      <p class="text-slate-600 mt-2">Copy the long ID between <code>/d/</code> and <code>/edit</code></p>
+    </div>
+  </div>
+
+  <!-- STEP 3 -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0">3</span>
+      <h2 class="text-lg font-semibold">Set up Apps Script</h2>
+    </div>
+    <div class="ml-11 space-y-2 text-slate-600">
+      <p>1. In your Google Sheet, click <strong>Extensions → Apps Script</strong></p>
+      <p>2. Delete all existing code in the editor</p>
+      <p>3. Open <code>Code.gs</code> from the files you downloaded and paste the entire contents</p>
+      <p>4. Find line 3: <code>const SHEET_ID = 'YOUR_GOOGLE_SHEET_ID_HERE';</code></p>
+      <p>5. Replace <code>YOUR_GOOGLE_SHEET_ID_HERE</code> with your actual Sheet ID from Step 2</p>
+      <p>6. Click 💾 <strong>Save</strong></p>
+    </div>
+  </div>
+
+  <!-- STEP 4 -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0">4</span>
+      <h2 class="text-lg font-semibold">Deploy as Web App</h2>
+    </div>
+    <div class="ml-11 space-y-2 text-slate-600">
+      <p>1. Click <strong>Deploy → New deployment</strong></p>
+      <p>2. Click the gear icon ⚙ next to "Select type" → choose <strong>Web app</strong></p>
+      <p>3. Set:
+        <ul class="list-none mt-1 ml-4 space-y-1">
+          <li>• <strong>Execute as:</strong> Me</li>
+          <li>• <strong>Who has access:</strong> Anyone</li>
+        </ul>
+      </p>
+      <p>4. Click <strong>Deploy</strong> → Authorize when asked</p>
+      <p>5. Copy the <strong>Web app URL</strong> — it looks like:</p>
+      <code class="block text-xs bg-slate-100 p-3 rounded-lg break-all mt-2">https://script.google.com/macros/s/AKfycb.../exec</code>
+    </div>
+  </div>
+
+  <!-- STEP 5 -->
+  <div class="mb-8">
+    <div class="flex items-center gap-3 mb-3">
+      <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold text-sm shrink-0">5</span>
+      <h2 class="text-lg font-semibold">Connect to Dashboard</h2>
+    </div>
+    <div class="ml-11 space-y-2 text-slate-600">
+      <p>1. Open <code>index.html</code> in your browser</p>
+      <p>2. On the login screen, tap <strong>⚙ Configure Google Sheets</strong></p>
+      <p>3. Paste your Web App URL and tap <strong>Save & Connect</strong></p>
+      <p>4. Log in with the username/password you added to the Users sheet</p>
+      <p>5. ✅ Done! All tasks will now sync to your Google Sheet in real time.</p>
+    </div>
+  </div>
+
+  <!-- GITHUB -->
+  <div class="bg-slate-900 text-white rounded-xl p-6 mb-8">
+    <h2 class="font-semibold text-lg mb-3">🚀 Hosting on GitHub Pages (Free)</h2>
+    <ol class="list-decimal list-inside space-y-2 text-slate-300 text-sm">
+      <li>Create a free account at <a href="https://github.com" target="_blank" class="text-blue-400 underline">github.com</a></li>
+      <li>Create a new repository (e.g. <code class="bg-slate-700">taskflow</code>)</li>
+      <li>Upload <code class="bg-slate-700">index.html</code> and <code class="bg-slate-700">setup-guide.html</code></li>
+      <li>Go to Settings → Pages → Source: <strong>main branch</strong></li>
+      <li>Your app will be live at <code class="bg-slate-700">https://yourusername.github.io/taskflow</code></li>
+    </ol>
+    <p class="text-slate-400 text-sm mt-3">Access it from any device, anywhere in the world!</p>
+  </div>
+
+  <!-- ADD USERS -->
+  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-5 mb-8">
+    <h2 class="font-semibold text-emerald-900 mb-2">👥 Adding More Users</h2>
+    <p class="text-emerald-800 text-sm">To add more users, simply add rows in the <strong>Users</strong> sheet:</p>
+    <div class="mt-2 overflow-x-auto">
+      <table class="text-sm text-emerald-900 mt-2">
+        <tr class="font-medium"><td class="pr-6">Username</td><td class="pr-6">Password</td><td class="pr-6">DisplayName</td><td>Active</td></tr>
+        <tr class="text-emerald-700"><td class="pr-6">alice</td><td class="pr-6">pass123</td><td class="pr-6">Alice</td><td>true</td></tr>
+        <tr class="text-emerald-700"><td class="pr-6">bob</td><td class="pr-6">secure99</td><td class="pr-6">Bob</td><td>true</td></tr>
+      </table>
+    </div>
+    <p class="text-emerald-700 text-xs mt-3">Set <code>Active</code> to <code>false</code> to disable a user without deleting them.</p>
+  </div>
+
+  <!-- BULK FORMAT -->
+  <div class="bg-amber-50 border border-amber-200 rounded-xl p-5">
+    <h2 class="font-semibold text-amber-900 mb-2">📤 Bulk Upload Format (.txt)</h2>
+    <p class="text-amber-800 text-sm mb-3">Create a .txt file with one task per line, fields separated by <code>|</code>:</p>
+    <pre class="bg-amber-100 p-3 rounded-lg text-xs text-amber-900 overflow-x-auto">Task Name | Category | Priority | Time | Notes (optional)
+Fix login bug | Dev | High | 1 hour | Check auth module
+Write blog post | Marketing | Low | 2 hours
+Review designs | Design | Medium | 30 min | Figma link in Slack
+Deploy to staging | Dev | High | 4 hours</pre>
+    <p class="text-amber-700 text-xs mt-2">Priority: <code>High</code>, <code>Medium</code>, or <code>Low</code> · Time: <code>30 min</code>, <code>1 hour</code>, <code>2 hours</code>, <code>4 hours</code>, or <code>1+ day</code></p>
+  </div>
+
+  <div class="text-center mt-10">
+    <a href="index.html" class="inline-block bg-blue-600 text-white px-8 py-3 rounded-xl font-medium hover:bg-blue-700 transition-colors">← Back to Dashboard</a>
+  </div>
+</div>
+</body>
+</html>
